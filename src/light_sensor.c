@@ -14,12 +14,13 @@
 #include "hardware/i2c.h"
 #include "pico/rand.h"
 
-const int ADDR = 0x51;
-const int LOWER_LUX = 50;
-const int HIGH_LUX = 400;
-const int LOW_THRESH = LOWER_LUX / 0.012;
-const int HIGH_THRESH = HIGH_LUX / 0.012;
-const int INT_PIN = 16;
+
+extern const int ADDR;// = 0x51;
+extern const int LOWER_LUX;// = 50;
+extern const int HIGH_LUX; // = 400;
+extern const int LOW_THRESH; // = LOWER_LUX / 0.012;
+extern const int HIGH_THRESH; // = HIGH_LUX / 0.012;
+extern const int INT_PIN; // = 16;
 
 void light_irq_handler()
 {
@@ -31,6 +32,7 @@ void light_irq_handler()
 
     if (regD[1] & (1 << 5))
     {
+        my_pwm_init(true);
         printf("ALS low threshold interrupt\n");
     }
 
