@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "pico/stdlib.h"
-//#include "support.h"
+#include "support.h"
 
 // Base library headers ncluded for your convenience.
 // ** You may have to add more depending on your practical. **
@@ -33,10 +33,10 @@ const int SPI_DISP_SCK = -1;
 const int SPI_DISP_CSn = -1;
 const int SPI_DISP_TX = -1;
 
-const int MTR_IN1 = 15; // A+
-const int MTR_IN2 = 16; // A-
-const int MTR_IN3 = 12; // B+
-const int MTR_IN4 = 11; // B-
+const int MTR_IN1 = 30; // A+
+const int MTR_IN2 = 29; // A-
+const int MTR_IN3 = 25; // B+
+const int MTR_IN4 = 26; // B-
 
 const int ALL_CTRL_PINS = (1u << MTR_IN1) | (1u << MTR_IN2) | (1u << MTR_IN3) | (1u << MTR_IN4) ;
 
@@ -73,7 +73,7 @@ gpio_set_dir_out_masked(ALL_CTRL_PINS);
 }
 
 
-void my_pwm_init() {
+void my_pwm_init(bool dir) {
 
     // Top = 49,999
     // Clock Div = 20
@@ -84,46 +84,114 @@ void my_pwm_init() {
     uint16_t BPS = pwm_gpio_to_slice_num(MTR_IN3);
     uint16_t BMS = pwm_gpio_to_slice_num(MTR_IN4);
     // Set clock values then enable at the same time, to sync.
-    pwm_set_clkdiv(APS,20);
-    pwm_set_clkdiv(AMS,20);
-    pwm_set_clkdiv(BPS,20);
-    pwm_set_clkdiv(BMS,20);
+    uint16_t clkdiv = 20;
+    pwm_set_clkdiv(APS,clkdiv);
+    pwm_set_clkdiv(AMS,clkdiv);
+    pwm_set_clkdiv(BPS,clkdiv);
+    pwm_set_clkdiv(BMS,clkdiv);
 
-    pwm_hw->slice[APS].top = 49999u;
-    pwm_hw->slice[AMS].top = 49999u;
-    pwm_hw->slice[BPS].top = 49999u;
-    pwm_hw->slice[BMS].top = 49999u;
+    uint16_t period = 49999u;
+    pwm_hw->slice[APS].top = period;
+    pwm_hw->slice[AMS].top = period;
+    pwm_hw->slice[BPS].top = period;
+    pwm_hw->slice[BMS].top = period;
 
-    pwm_hw->slice[APS].cc = 25000u | (25000u << 16);
-    pwm_hw->slice[AMS].cc = 25000u | (25000u << 16);
-    pwm_hw->slice[BPS].cc = 25000u | (25000u << 16);
-    pwm_hw->slice[BMS].cc = 25000u | (25000u << 16);
+    uint16_t duty_cyc = (period + 1) / 2;
+    pwm_hw->slice[APS].cc = duty_cyc | (duty_cyc << 16);
+    pwm_hw->slice[AMS].cc = duty_cyc | (duty_cyc << 16);
+    pwm_hw->slice[BPS].cc = duty_cyc | (duty_cyc << 16);
+    pwm_hw->slice[BMS].cc = duty_cyc | (duty_cyc << 16);
 
-    // Set counters, A+ to 25,000, A- to 0, B+ to 37,500, and B- to 12,500
-    pwm_hw->slice[APS].ctr = 25000u;
-    pwm_hw->slice[AMS].ctr = 0u;
-    pwm_hw->slice[BPS].ctr = 37500u;
-    pwm_hw->slice[BMS].ctr = 12500u;
+    uint16_t ap ;
+    uint16_t am;
+    uint16_t bp;
+    uint16_t bm;
+    // Set counters, A+ to 25,000, A- to 0, B+ to 37,500, and B- to 12,
+    if(dir)
+    {
+    ap = (period + 1) / 2;
+    am = 0;
+    bp = ((period + 1) * 3) / 4;
+    bm = (period + 1) / 4;
+    }
+    else {
+    ap = (period + 1) / 2;
+    am = 0;
+    bp = (period + 1) / 4;
+    bm = ((period + 1) * 3) / 4;
 
+    }
+
+    pwm_hw->slice[APS].ctr = ap;
+    pwm_hw->slice[AMS].ctr = am;
+    pwm_hw->slice[BPS].ctr = bp;
+    pwm_hw->slice[BMS].ctr = bm;
+
+    
     uint16_t chan = (1u << APS) | (1u << AMS) | (1u << BPS) | (1u << BMS); 
     pwm_hw->en = chan;
-
-    while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= 24500u) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= 25500))
+    if(dir){
+    while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= (ap - am - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= (ap - am + 500)))
     {
-        pwm_hw->slice[AMS].csr = 1u << 6;
+        pwm_hw->slice[AMS].csr = 1u | 1u << 6;
         sleep_us(1);
     }
-      while(((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) >= 12450u) & ((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) <= 12550))
+      while(((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) >= (bp - ap - 500)) & ((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) <= (bp - ap + 500)))
     {
-        pwm_hw->slice[BPS].csr = 1u << 6;
+        pwm_hw->slice[BPS].csr = 1u | 1u << 6;
         sleep_us(1);
     }
-      while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) >= 12450u) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) <= 12550))
+      while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) >= (ap - bm - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) <= (ap - bm + 500)))
     {
-        pwm_hw->slice[BMS].csr = 1u << 6;
+        pwm_hw->slice[BMS].csr =1u |  1u << 6;
         sleep_us(1);
     }
+}
+else {
+    while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= (ap - am - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= (ap - am + 500)))
+    {
+        pwm_hw->slice[AMS].csr = 1u | 1u << 6;
+        sleep_us(1);
+    }
+      while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr) >= (ap - bp - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr) <= (ap - bp + 500)))
+    {
+        pwm_hw->slice[BPS].csr = 1u | 1u << 6;
+        sleep_us(1);
+    }
+      while(((pwm_hw->slice[BMS].ctr - pwm_hw->slice[APS].ctr) >= (bm - ap - 500)) & ((pwm_hw->slice[BMS].ctr - pwm_hw->slice[APS].ctr) <= (bm - ap + 500)))
+    {
+        pwm_hw->slice[BMS].csr =1u |  1u << 6;
+        sleep_us(1);
+    }
+}
+   
     
+}
+void motor_two()
+{
+    
+gpio_set_function_masked((1u << 15u) | (1u << 16u),GPIO_FUNC_PWM);
+    uint16_t APS = pwm_gpio_to_slice_num(15);
+    uint16_t AMS = pwm_gpio_to_slice_num(16);
+
+    // Set clock values then enable at the same time, to sync.
+    uint16_t clkdiv = 20;
+    pwm_set_clkdiv(APS,clkdiv);
+    pwm_set_clkdiv(AMS,clkdiv);
+
+
+    uint16_t period = 12500u;
+    pwm_hw->slice[APS].top = period;
+
+
+    uint16_t duty_cyc = (period + 1) / 2;
+    pwm_hw->slice[APS].cc = duty_cyc | (duty_cyc << 16);
+
+
+ //uint16_t chan = (1u << APS); //| (1u << AMS)
+    pwm_hw->slice[APS].csr = 1u;
+
+
 }
 
 
@@ -160,13 +228,14 @@ void setState(int state)
 int main()
 {
     my_gpio_init();
-    my_pwm_init();
-    int state = 0;
+    my_pwm_init(false);
+    motor_two();
+    //int state = 0;
 
-    uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);
-    uint16_t AMS = pwm_gpio_to_slice_num(MTR_IN2);
-    uint16_t BPS = pwm_gpio_to_slice_num(MTR_IN3);
-    uint16_t BMS = pwm_gpio_to_slice_num(MTR_IN4);
+    // uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);
+    // uint16_t AMS = pwm_gpio_to_slice_num(MTR_IN2);
+    // uint16_t BPS = pwm_gpio_to_slice_num(MTR_IN3);
+    // uint16_t BMS = pwm_gpio_to_slice_num(MTR_IN4);
     // while(1)
     // {
     //     setState(state);
@@ -186,12 +255,12 @@ int main()
     //     }
     //     sleep_ms(7);
     // }
-u_int16_t a, b, c;
+//u_int16_t a, b, c;
     while(1)
     {
-        a = pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr;
-        c = pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr;
-        b = pwm_hw->slice[BPS].ctr - pwm_hw->slice[BMS].ctr;
+        // a = pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr;
+        // c = pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr;
+        // b = pwm_hw->slice[BPS].ctr - pwm_hw->slice[BMS].ctr;
     }
     for(;;);
     return 0;
