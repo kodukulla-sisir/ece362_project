@@ -83,14 +83,14 @@ void light_init ()
     return;
 }
 
-int main()
-{
-    stdio_init_all();
-    light_init();
+// int main()
+// {
+//     stdio_init_all();
+//     light_init();
 
-    for(;;) {
-        tight_loop_contents();
-    }
+//     for(;;) {
+//         tight_loop_contents();
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
