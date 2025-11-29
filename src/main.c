@@ -28,6 +28,8 @@ const int MTR_IN4 = 26; // B-
 
 const int ALL_CTRL_PINS = (1u << MTR_IN1) | (1u << MTR_IN2) | (1u << MTR_IN3) | (1u << MTR_IN4);
 
+const int lux_threshold = 300; // temp lux val
+const float current_lux = 0.0f;
 
 light_init();
 
@@ -35,11 +37,21 @@ int main()
 {
     stdio_init_all();
     light_init();
+    light_poll();
 
+
+
+    if(current_lux < lux_threshold){
+        my_pwm_init(true); //clockwise
+    }
+    else{
+        my_pwm_init(false); //counter clockwise
+    }
     for(;;)
     {
         //tight_loop_contents();
     }
+
 }
 
 //////////////////////////////////////////////////////////////////////////////

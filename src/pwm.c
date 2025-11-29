@@ -70,11 +70,13 @@ void my_pwm_init(bool dir) {
     // Top = 49,999
     // Clock Div = 20
     // Frequency out = 150 Hz
+    //PWM initlization for motor pins
     gpio_set_function_masked(ALL_CTRL_PINS,GPIO_FUNC_PWM);
     uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);
     uint16_t AMS = pwm_gpio_to_slice_num(MTR_IN2);
     uint16_t BPS = pwm_gpio_to_slice_num(MTR_IN3);
     uint16_t BMS = pwm_gpio_to_slice_num(MTR_IN4);
+
     // Set clock values then enable at the same time, to sync.
     uint16_t clkdiv = 20;
     pwm_set_clkdiv(APS,clkdiv);
@@ -82,36 +84,39 @@ void my_pwm_init(bool dir) {
     pwm_set_clkdiv(BPS,clkdiv);
     pwm_set_clkdiv(BMS,clkdiv);
 
+    //sets the top value for the counter
     uint16_t period = 49999u;
     pwm_hw->slice[APS].top = period;
     pwm_hw->slice[AMS].top = period;
     pwm_hw->slice[BPS].top = period;
     pwm_hw->slice[BMS].top = period;
 
+    //sets the duty cycle to 50% 
     uint16_t duty_cyc = (period + 1) / 2;
     pwm_hw->slice[APS].cc = duty_cyc | (duty_cyc << 16);
     pwm_hw->slice[AMS].cc = duty_cyc | (duty_cyc << 16);
     pwm_hw->slice[BPS].cc = duty_cyc | (duty_cyc << 16);
     pwm_hw->slice[BMS].cc = duty_cyc | (duty_cyc << 16);
 
-    uint16_t ap ;
-    uint16_t am;
-    uint16_t bp;
-    uint16_t bm;
-    // Set counters, A+ to 25,000, A- to 0, B+ to 37,500, and B- to 12,
-    if(dir)
-    {
-    ap = (period + 1) / 2;
-    am = 0;
-    bp = ((period + 1) * 3) / 4;
-    bm = (period + 1) / 4;
-    }
-    else {
-    ap = (period + 1) / 2;
-    am = 0;
-    bp = (period + 1) / 4;
-    bm = ((period + 1) * 3) / 4;
+    uint16_t ap; //counter for APS (A+)
+    uint16_t am; //counter for AMS (A-)
+    uint16_t bp; //counter for BPS (B+)
+    uint16_t bm; //counter for BMS (B-)
 
+    // Set counters, A+ to 25,000, A- to 0, B+ to 37,500, and B- to 12,
+
+    if(dir) //  clockwise (I think) if true
+    {
+        ap = (period + 1) / 2;
+        am = 0;
+        bp = ((period + 1) * 3) / 4;
+        bm = (period + 1) / 4;
+        }
+        else {
+        ap = (period + 1) / 2;
+        am = 0;
+        bp = (period + 1) / 4;
+        bm = ((period + 1) * 3) / 4;
     }
 
     pwm_hw->slice[APS].ctr = ap;
@@ -123,39 +128,39 @@ void my_pwm_init(bool dir) {
     uint16_t chan = (1u << APS) | (1u << AMS) | (1u << BPS) | (1u << BMS); 
     pwm_hw->en = chan;
     if(dir){
-    while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= (ap - am - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= (ap - am + 500)))
-    {
-        pwm_hw->slice[AMS].csr = 1u | 1u << 6;
-        //sleep_us(1);
+        while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= (ap - am - 500)) && ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= (ap - am + 500)))
+        {
+            pwm_hw->slice[AMS].csr = 1u | 1u << 6;
+            //sleep_us(1);
+        }
+        while(((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) >= (bp - ap - 500)) && ((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) <= (bp - ap + 500)))
+        {
+            pwm_hw->slice[BPS].csr = 1u | 1u << 6;
+            //sleep_us(1);
+        }
+        while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) >= (ap - bm - 500)) && ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) <= (ap - bm + 500)))
+        {
+            pwm_hw->slice[BMS].csr =1u |  1u << 6;
+            //sleep_us(1);
+        }
     }
-      while(((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) >= (bp - ap - 500)) & ((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) <= (bp - ap + 500)))
-    {
-        pwm_hw->slice[BPS].csr = 1u | 1u << 6;
-        //sleep_us(1);
+    else {
+        while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= (ap - am - 500)) && ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= (ap - am + 500)))
+        {
+            pwm_hw->slice[AMS].csr = 1u | 1u << 6;
+            //sleep_us(1);
+        }
+        while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr) >= (ap - bp - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr) <= (ap - bp + 500)))
+        {
+            pwm_hw->slice[BPS].csr = 1u | 1u << 6;
+            //sleep_us(1);
+        }
+        while(((pwm_hw->slice[BMS].ctr - pwm_hw->slice[APS].ctr) >= (bm - ap - 500)) && ((pwm_hw->slice[BMS].ctr - pwm_hw->slice[APS].ctr) <= (bm - ap + 500)))
+        {
+            pwm_hw->slice[BMS].csr =1u |  1u << 6;
+            //sleep_us(1);
+        }
     }
-      while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) >= (ap - bm - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) <= (ap - bm + 500)))
-    {
-        pwm_hw->slice[BMS].csr =1u |  1u << 6;
-        //sleep_us(1);
-    }
-}
-else {
-    while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= (ap - am - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= (ap - am + 500)))
-    {
-        pwm_hw->slice[AMS].csr = 1u | 1u << 6;
-        //sleep_us(1);
-    }
-      while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr) >= (ap - bp - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr) <= (ap - bp + 500)))
-    {
-        pwm_hw->slice[BPS].csr = 1u | 1u << 6;
-        //sleep_us(1);
-    }
-      while(((pwm_hw->slice[BMS].ctr - pwm_hw->slice[APS].ctr) >= (bm - ap - 500)) & ((pwm_hw->slice[BMS].ctr - pwm_hw->slice[APS].ctr) <= (bm - ap + 500)))
-    {
-        pwm_hw->slice[BMS].csr =1u |  1u << 6;
-        //sleep_us(1);
-    }
-}
    
     
 }
@@ -179,11 +184,8 @@ gpio_set_function_masked((1u << 15u) | (1u << 16u),GPIO_FUNC_PWM);
     uint16_t duty_cyc = (period + 1) / 2;
     pwm_hw->slice[APS].cc = duty_cyc | (duty_cyc << 16);
 
-
  //uint16_t chan = (1u << APS); //| (1u << AMS)
     pwm_hw->slice[APS].csr = 1u;
-
-
 }
 
 
