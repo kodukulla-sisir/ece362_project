@@ -15,6 +15,7 @@
 #include "hardware/spi.h"
 #include "hardware/uart.h"
 #include "pico/rand.h"
+#include "pwm.h"
 
 
 //////////////////////////////////////////////////////////////////////////////

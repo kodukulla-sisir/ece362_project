@@ -13,6 +13,7 @@
 #include "hardware/uart.h"
 #include "hardware/i2c.h"
 #include "pico/rand.h"
+#include "lightsensor.h"
 
 
 extern const int ADDR;// = 0x51;
