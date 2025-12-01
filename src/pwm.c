@@ -33,17 +33,24 @@ const int SPI_DISP_SCK = -1;
 const int SPI_DISP_CSn = -1;
 const int SPI_DISP_TX = -1;
 
+//MTR 1
 const int MTR_IN1 = 30; // A+
 const int MTR_IN2 = 29; // A-
 const int MTR_IN3 = 25; // B+
 const int MTR_IN4 = 26; // B-
 
-const int ALL_CTRL_PINS = (1u << MTR_IN1) | (1u << MTR_IN2) | (1u << MTR_IN3) | (1u << MTR_IN4) ;
+// MTR 2
+const int MTR2_IN1 = 30; // A+
+const int MTR2_IN2 = 29; // A-
+const int MTR2_IN3 = 25; // B+
+const int MTR2_IN4 = 26; // B-
 
-const int S0 = (1u << MTR_IN1) | (1u << MTR_IN3);
-const int S1 = (1u << MTR_IN2) | (1u << MTR_IN3);
-const int S2 = (1u << MTR_IN2) | (1u << MTR_IN4);
-const int S3 = (1u << MTR_IN1) | (1u << MTR_IN4);
+const int ALL_CTRL_PINS = (1u << MTR_IN1) | (1u << MTR_IN2) | (1u << MTR_IN3) | (1u << MTR_IN4) | (1u << MTR2_IN1) | (1u << MTR2_IN2) | (1u << MTR2_IN3) | (1u << MTR2_IN4);
+
+// const int S0 = (1u << MTR_IN1) | (1u << MTR_IN3);
+// const int S1 = (1u << MTR_IN2) | (1u << MTR_IN3);
+// const int S2 = (1u << MTR_IN2) | (1u << MTR_IN4);
+// const int S3 = (1u << MTR_IN1) | (1u << MTR_IN4);
 
 //////////////////////////////////////////////
 // Step 1
@@ -73,11 +80,25 @@ gpio_set_dir_out_masked(ALL_CTRL_PINS);
 }
 
 
-void my_pwm_init(bool dir) {
+void my_pwm_init(bool mtr,bool dir) {
 
     // Top = 49,999
     // Clock Div = 20
     // Frequency out = 150 Hz
+    if(mtr) 
+    {
+    uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);
+    uint16_t AMS = pwm_gpio_to_slice_num(MTR_IN2);
+    uint16_t BPS = pwm_gpio_to_slice_num(MTR_IN3);
+    uint16_t BMS = pwm_gpio_to_slice_num(MTR_IN4);
+    }
+    else
+    {
+    uint16_t APS = pwm_gpio_to_slice_num(MTR2_IN1);
+    uint16_t AMS = pwm_gpio_to_slice_num(MTR2_IN2);
+    uint16_t BPS = pwm_gpio_to_slice_num(MTR2_IN3);
+    uint16_t BMS = pwm_gpio_to_slice_num(MTR2_IN4);
+    }
     gpio_set_function_masked(ALL_CTRL_PINS,GPIO_FUNC_PWM);
     uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);
     uint16_t AMS = pwm_gpio_to_slice_num(MTR_IN2);
@@ -167,60 +188,60 @@ else {
    
     
 }
-void motor_two()
-{
+// void motor_two()
+// {
     
-gpio_set_function_masked((1u << 15u) | (1u << 16u),GPIO_FUNC_PWM);
-    uint16_t APS = pwm_gpio_to_slice_num(15);
-    uint16_t AMS = pwm_gpio_to_slice_num(16);
+// gpio_set_function_masked((1u << 15u) | (1u << 16u),GPIO_FUNC_PWM);
+//     uint16_t APS = pwm_gpio_to_slice_num(15);
+//     uint16_t AMS = pwm_gpio_to_slice_num(16);
 
-    // Set clock values then enable at the same time, to sync.
-    uint16_t clkdiv = 20;
-    pwm_set_clkdiv(APS,clkdiv);
-    pwm_set_clkdiv(AMS,clkdiv);
-
-
-    uint16_t period = 12500u;
-    pwm_hw->slice[APS].top = period;
+//     // Set clock values then enable at the same time, to sync.
+//     uint16_t clkdiv = 20;
+//     pwm_set_clkdiv(APS,clkdiv);
+//     pwm_set_clkdiv(AMS,clkdiv);
 
 
-    uint16_t duty_cyc = (period + 1) / 2;
-    pwm_hw->slice[APS].cc = duty_cyc | (duty_cyc << 16);
+//     uint16_t period = 12500u;
+//     pwm_hw->slice[APS].top = period;
 
 
- //uint16_t chan = (1u << APS); //| (1u << AMS)
-    pwm_hw->slice[APS].csr = 1u;
+//     uint16_t duty_cyc = (period + 1) / 2;
+//     pwm_hw->slice[APS].cc = duty_cyc | (duty_cyc << 16);
 
 
-}
+//  //uint16_t chan = (1u << APS); //| (1u << AMS)
+//     pwm_hw->slice[APS].csr = 1u;
 
 
-void setState(int state)
-{
-    switch (state) {
-        case 0: 
-        gpio_clr_mask(ALL_CTRL_PINS);
-        gpio_set_mask(S0);
-        //gpio_xor_mask(S0 | S1)
-        break;
-        case 1:
-        gpio_clr_mask(ALL_CTRL_PINS);
-        gpio_set_mask(S1);
-        break;
-        case 2: 
-        gpio_clr_mask(ALL_CTRL_PINS);
-        gpio_set_mask(S2);
-        break;
-        case 3:
-        gpio_clr_mask(ALL_CTRL_PINS);
-        gpio_set_mask(S3);
-        break;
-        default:
-        printf("uh oh");
+// }
+
+
+// void setState(int state)
+// {
+//     switch (state) {
+//         case 0: 
+//         gpio_clr_mask(ALL_CTRL_PINS);
+//         gpio_set_mask(S0);
+//         //gpio_xor_mask(S0 | S1)
+//         break;
+//         case 1:
+//         gpio_clr_mask(ALL_CTRL_PINS);
+//         gpio_set_mask(S1);
+//         break;
+//         case 2: 
+//         gpio_clr_mask(ALL_CTRL_PINS);
+//         gpio_set_mask(S2);
+//         break;
+//         case 3:
+//         gpio_clr_mask(ALL_CTRL_PINS);
+//         gpio_set_mask(S3);
+//         break;
+//         default:
+//         printf("uh oh");
     
-    }
+//     }
 
-}
+// }
 
 
 
@@ -228,8 +249,8 @@ void setState(int state)
 int main()
 {
     my_gpio_init();
-    my_pwm_init(false);
-    motor_two();
+    my_pwm_init(false,false);
+    //motor_two();
     //int state = 0;
 
     // uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);
