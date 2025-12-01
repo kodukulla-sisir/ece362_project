@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "irq.h": "c"
+        "irq.h": "c",
+        "dma.h": "c",
+        "uart.h": "c",
+        "pio.h": "c"
     }
 }

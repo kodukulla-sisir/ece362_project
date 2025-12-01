@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "pico/stdlib.h"
-#include "support.h"
 
 // Base library headers ncluded for your convenience.
 // ** You may have to add more depending on your practical. **
@@ -18,14 +17,13 @@
 #include "pico/rand.h"
 
 
-
 //////////////////////////////////////////////////////////////////////////////
 
 // Make sure to set your pins if you are using this on your own breadboard.
 // For the Platform Test Board, these are the correct pin numbers.
-const int SPI_7SEG_SCK = 14;
-const int SPI_7SEG_CSn = 13;
-const int SPI_7SEG_TX = 15;
+extern const int SPI_7SEG_SCK; // = 14;
+extern const int SPI_7SEG_CSn; // = 13;
+extern const int SPI_7SEG_TX;//  = 15;
 
 // NOT NEEDED since we are not using LCD/OLED in this practical.
 // But it needs to be defined to avoid compiler errors.
@@ -104,6 +102,7 @@ void my_pwm_init(bool mtr,bool dir) {
     uint16_t AMS = pwm_gpio_to_slice_num(MTR_IN2);
     uint16_t BPS = pwm_gpio_to_slice_num(MTR_IN3);
     uint16_t BMS = pwm_gpio_to_slice_num(MTR_IN4);
+
     // Set clock values then enable at the same time, to sync.
     uint16_t clkdiv = 20;
     pwm_set_clkdiv(APS,clkdiv);
@@ -111,36 +110,39 @@ void my_pwm_init(bool mtr,bool dir) {
     pwm_set_clkdiv(BPS,clkdiv);
     pwm_set_clkdiv(BMS,clkdiv);
 
+    //sets the top value for the counter
     uint16_t period = 49999u;
     pwm_hw->slice[APS].top = period;
     pwm_hw->slice[AMS].top = period;
     pwm_hw->slice[BPS].top = period;
     pwm_hw->slice[BMS].top = period;
 
+    //sets the duty cycle to 50% 
     uint16_t duty_cyc = (period + 1) / 2;
     pwm_hw->slice[APS].cc = duty_cyc | (duty_cyc << 16);
     pwm_hw->slice[AMS].cc = duty_cyc | (duty_cyc << 16);
     pwm_hw->slice[BPS].cc = duty_cyc | (duty_cyc << 16);
     pwm_hw->slice[BMS].cc = duty_cyc | (duty_cyc << 16);
 
-    uint16_t ap ;
-    uint16_t am;
-    uint16_t bp;
-    uint16_t bm;
-    // Set counters, A+ to 25,000, A- to 0, B+ to 37,500, and B- to 12,
-    if(dir)
-    {
-    ap = (period + 1) / 2;
-    am = 0;
-    bp = ((period + 1) * 3) / 4;
-    bm = (period + 1) / 4;
-    }
-    else {
-    ap = (period + 1) / 2;
-    am = 0;
-    bp = (period + 1) / 4;
-    bm = ((period + 1) * 3) / 4;
+    uint16_t ap; //counter for APS (A+)
+    uint16_t am; //counter for AMS (A-)
+    uint16_t bp; //counter for BPS (B+)
+    uint16_t bm; //counter for BMS (B-)
 
+    // Set counters, A+ to 25,000, A- to 0, B+ to 37,500, and B- to 12,
+
+    if(dir) //  clockwise (I think) if true
+    {
+        ap = (period + 1) / 2;
+        am = 0;
+        bp = ((period + 1) * 3) / 4;
+        bm = (period + 1) / 4;
+        }
+        else {
+        ap = (period + 1) / 2;
+        am = 0;
+        bp = (period + 1) / 4;
+        bm = ((period + 1) * 3) / 4;
     }
 
     pwm_hw->slice[APS].ctr = ap;
@@ -152,39 +154,39 @@ void my_pwm_init(bool mtr,bool dir) {
     uint16_t chan = (1u << APS) | (1u << AMS) | (1u << BPS) | (1u << BMS); 
     pwm_hw->en = chan;
     if(dir){
-    while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= (ap - am - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= (ap - am + 500)))
-    {
-        pwm_hw->slice[AMS].csr = 1u | 1u << 6;
-        sleep_us(1);
+        while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= (ap - am - 500)) && ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= (ap - am + 500)))
+        {
+            pwm_hw->slice[AMS].csr = 1u | 1u << 6;
+            //sleep_us(1);
+        }
+        while(((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) >= (bp - ap - 500)) && ((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) <= (bp - ap + 500)))
+        {
+            pwm_hw->slice[BPS].csr = 1u | 1u << 6;
+            //sleep_us(1);
+        }
+        while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) >= (ap - bm - 500)) && ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) <= (ap - bm + 500)))
+        {
+            pwm_hw->slice[BMS].csr =1u |  1u << 6;
+            //sleep_us(1);
+        }
     }
-      while(((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) >= (bp - ap - 500)) & ((pwm_hw->slice[BPS].ctr - pwm_hw->slice[APS].ctr) <= (bp - ap + 500)))
-    {
-        pwm_hw->slice[BPS].csr = 1u | 1u << 6;
-        sleep_us(1);
+    else {
+        while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= (ap - am - 500)) && ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= (ap - am + 500)))
+        {
+            pwm_hw->slice[AMS].csr = 1u | 1u << 6;
+            //sleep_us(1);
+        }
+        while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr) >= (ap - bp - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr) <= (ap - bp + 500)))
+        {
+            pwm_hw->slice[BPS].csr = 1u | 1u << 6;
+            //sleep_us(1);
+        }
+        while(((pwm_hw->slice[BMS].ctr - pwm_hw->slice[APS].ctr) >= (bm - ap - 500)) && ((pwm_hw->slice[BMS].ctr - pwm_hw->slice[APS].ctr) <= (bm - ap + 500)))
+        {
+            pwm_hw->slice[BMS].csr =1u |  1u << 6;
+            //sleep_us(1);
+        }
     }
-      while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) >= (ap - bm - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BMS].ctr) <= (ap - bm + 500)))
-    {
-        pwm_hw->slice[BMS].csr =1u |  1u << 6;
-        sleep_us(1);
-    }
-}
-else {
-    while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) >= (ap - am - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr) <= (ap - am + 500)))
-    {
-        pwm_hw->slice[AMS].csr = 1u | 1u << 6;
-        sleep_us(1);
-    }
-      while(((pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr) >= (ap - bp - 500)) & ((pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr) <= (ap - bp + 500)))
-    {
-        pwm_hw->slice[BPS].csr = 1u | 1u << 6;
-        sleep_us(1);
-    }
-      while(((pwm_hw->slice[BMS].ctr - pwm_hw->slice[APS].ctr) >= (bm - ap - 500)) & ((pwm_hw->slice[BMS].ctr - pwm_hw->slice[APS].ctr) <= (bm - ap + 500)))
-    {
-        pwm_hw->slice[BMS].csr =1u |  1u << 6;
-        sleep_us(1);
-    }
-}
    
     
 }
@@ -238,9 +240,33 @@ else {
 //         break;
 //         default:
 //         printf("uh oh");
+// void setState(int state)
+// {
+//     switch (state) {
+//         case 0: 
+//         gpio_clr_mask(ALL_CTRL_PINS);
+//         gpio_set_mask(S0);
+//         //gpio_xor_mask(S0 | S1)
+//         break;
+//         case 1:
+//         gpio_clr_mask(ALL_CTRL_PINS);
+//         gpio_set_mask(S1);
+//         break;
+//         case 2: 
+//         gpio_clr_mask(ALL_CTRL_PINS);
+//         gpio_set_mask(S2);
+//         break;
+//         case 3:
+//         gpio_clr_mask(ALL_CTRL_PINS);
+//         gpio_set_mask(S3);
+//         break;
+//         default:
+//         printf("uh oh");
     
 //     }
+//     }
 
+// }
 // }
 
 
@@ -253,36 +279,36 @@ int main()
     //motor_two();
     //int state = 0;
 
-    // uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);
-    // uint16_t AMS = pwm_gpio_to_slice_num(MTR_IN2);
-    // uint16_t BPS = pwm_gpio_to_slice_num(MTR_IN3);
-    // uint16_t BMS = pwm_gpio_to_slice_num(MTR_IN4);
-    // while(1)
-    // {
-    //     setState(state);
-    //     state = ++state % 4;
-    //     sleep_ms(7);
-    // }
-    // while(1)
-    // {
-    //     setState(state);
-    //     if(state == 0)
-    //     {
-    //         state = 3;
-    //     }
-    //     else 
-    //     {
-    //         state--;
-    //     }
-    //     sleep_ms(7);
-    // }
-//u_int16_t a, b, c;
-    while(1)
-    {
-        // a = pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr;
-        // c = pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr;
-        // b = pwm_hw->slice[BPS].ctr - pwm_hw->slice[BMS].ctr;
-    }
-    for(;;);
-    return 0;
-}
+//     // uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);
+//     // uint16_t AMS = pwm_gpio_to_slice_num(MTR_IN2);
+//     // uint16_t BPS = pwm_gpio_to_slice_num(MTR_IN3);
+//     // uint16_t BMS = pwm_gpio_to_slice_num(MTR_IN4);
+//     // while(1)
+//     // {
+//     //     setState(state);
+//     //     state = ++state % 4;
+//     //     sleep_ms(7);
+//     // }
+//     // while(1)
+//     // {
+//     //     setState(state);
+//     //     if(state == 0)
+//     //     {
+//     //         state = 3;
+//     //     }
+//     //     else 
+//     //     {
+//     //         state--;
+//     //     }
+//     //     sleep_ms(7);
+//     // }
+// //u_int16_t a, b, c;
+//     while(1)
+//     {
+//         // a = pwm_hw->slice[APS].ctr - pwm_hw->slice[AMS].ctr;
+//         // c = pwm_hw->slice[APS].ctr - pwm_hw->slice[BPS].ctr;
+//         // b = pwm_hw->slice[BPS].ctr - pwm_hw->slice[BMS].ctr;
+//     }
+//     for(;;);
+//     return 0;
+// }
