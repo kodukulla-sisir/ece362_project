@@ -1,6 +1,9 @@
 #ifndef CHARDISP_H
 #define CHARDISP_H
 
+#include <stdint.h>      
+#include "hardware/spi.h"
+
 void send_spi_cmd(spi_inst_t* spi, uint16_t value);
 void send_spi_data(spi_inst_t* spi, uint16_t value);
 void cd_init();
