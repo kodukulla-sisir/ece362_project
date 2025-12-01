@@ -6,6 +6,9 @@
 #include "hardware/uart.h"
 #include "hardware/pio.h"
 #include "rotary_enc.pio.h"
+#include "chardisp.h"
+#include "lightsensor.h"
+#include "pwm.h"
 
 const int ADDR = 0x51;
 const int LOWER_LUX = 50;
