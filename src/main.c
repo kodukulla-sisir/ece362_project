@@ -42,8 +42,8 @@ const int full_pos_threshold = 100; // Number of detents for full angle
 
 const int ALL_CTRL_PINS = (1u << MTR_IN1) | (1u << MTR_IN2) | (1u << MTR_IN3) | (1u << MTR_IN4);
 
-const int lux_threshold = 300; // temp lux val
-float curr_lux = 0.0f;
+// const int lux_threshold = 300; // temp lux val
+//float curr_lux = 0.0f;
 const int spi_poll = 10000000; // 10 seconds 
 
 
@@ -71,11 +71,10 @@ void pio_position(void){
 //     char temp_buffer[64]; 
 //     snprintf(temp_buffer, sizeof(temp_buffer), "%s: %d", str, temp);
 //     cd_display1(temp_buffer);
-// }
 
 void display_lux(){
     char temp_buffer[64]; 
-    snprintf(temp_buffer, sizeof(temp_buffer), "%s: %d", "Lux Level", curr_lux);
+    snprintf(temp_buffer, sizeof(temp_buffer), "%s: %d", "Lux Level", current_lux);
     cd_display1(temp_buffer);
 }
 
@@ -94,10 +93,11 @@ int main()
     stdio_init_all();
     light_init();
     light_poll();
+    spi_poll(); 
     init_chardisp_pins(); 
     cd_init(); 
 
-    display_temp("The temp is ", 23); 
+    //display_temp("The temp is ", 23); 
 
     // Setting irq handler for PIO 
     uint offset = pio_add_program(pio, &rotary_enc_program);
@@ -106,7 +106,7 @@ int main()
     irq_set_enabled(PIO0_IRQ_0, true);
     pio_set_irq0_source_enabled(pio, pis_sm0_rx_fifo_not_empty, true);
 
-    if(curr_lux < lux_threshold){
+    if(current_lux < lux_threshold){
         my_pwm_init(true); //clockwise
     }
     else{

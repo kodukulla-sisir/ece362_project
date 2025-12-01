@@ -14,7 +14,7 @@
 #include "hardware/i2c.h"
 #include "pico/rand.h"
 #include "lightsensor.h"
-
+#include "pwm.h"
 
 extern const int ADDR;// = 0x51;
 extern const int LOWER_LUX;// = 50;
@@ -24,7 +24,8 @@ extern const int HIGH_THRESH; // = HIGH_LUX / 0.012;
 extern const int INT_PIN; // = 16;
 
 const int poll_rate_us = 1000000; // 1 second
-float current_lux = 0.0f;
+//float current_lux = 0.0f;
+current_lux = 0.0f; 
 
 void light_irq_handler()
 {
@@ -111,6 +112,13 @@ void read_lux()
     // lux conversion: lux = raw * 0.012
     float lux = raw * 0.012f;
     current_lux = lux;
+
+    if(current_lux < lux_threshold){
+        my_pwm_init(true); //clockwise
+    }
+    else{
+        my_pwm_init(false); //counter clockwise
+    }
 }
 
 void light_poll(){
