@@ -19,6 +19,7 @@ const int INT_PIN = 16;
 const int SPI_7SEG_SCK = 14;
 const int SPI_7SEG_CSn = 13;
 const int SPI_7SEG_TX = 15;
+const int PS_HIGH_THRESH = 0;
 
 // NOT NEEDED since we are not using LCD/OLED in this practical.
 // But it needs to be defined to avoid compiler errors.

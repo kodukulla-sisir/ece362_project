@@ -3,6 +3,7 @@
         "irq.h": "c",
         "dma.h": "c",
         "uart.h": "c",
-        "pio.h": "c"
+        "pio.h": "c",
+        "lightsensor.h": "c"
     }
 }

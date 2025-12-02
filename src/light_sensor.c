@@ -22,11 +22,13 @@ extern const int HIGH_LUX; // = 400;
 extern const int LOW_THRESH; // = LOWER_LUX / 0.012;
 extern const int HIGH_THRESH; // = HIGH_LUX / 0.012;
 extern const int INT_PIN; // = 16;
+extern const int PS_HIGH_THRESH;
 
 const int poll_rate_us = 1000000; // 1 second
 //float current_lux = 0.0f;
 float current_lux = 0.0f; 
 const int lux_threshold = 300; 
+int PS_threshold = 0;
 
 // void light_irq_handler()
 // {
@@ -60,6 +62,27 @@ const int lux_threshold = 300;
 
 //     return;
 // }
+
+void sensor_irq_handler()
+{
+    uint8_t rD = 0xD;
+    uint8_t regD[2];
+
+    i2c_write_blocking(i2c1, ADDR, &rD, 1, true);
+    i2c_read_blocking(i2c1, ADDR, regD, 2, false);
+
+    if (regD[1] & (1 << 1))
+    {
+        //my_pwm_init(false, true);
+        PS_threshold = 1;
+    }
+    else
+    {
+        PS_threshold = 0;
+    }
+
+    return;
+}
 
 void sensor_irq_init()
 {
@@ -97,15 +120,29 @@ void light_init ()
     reg2[2] = (HIGH_THRESH >> 8) & 0xFF; 
     i2c_write_blocking(i2c1, ADDR, reg2, 3, false);
 
-    // PS Config1 Register
+    // PS Config1 and Config2 Register
     uint8_t reg3[3];
     reg3[0] = 0x03;
-    reg3[1] = 0b01010000;
-    reg3[2] = 0x00000011;
-    i2c_write_blocking(i2c1, ADDR, reg0, 3, false);
+    reg3[1] = 0b00010110;
+    reg3[2] = 0b00001001;
+    i2c_write_blocking(i2c1, ADDR, reg3, 3, false);
 
+    // PS Config3 and MS Register
+    uint8_t reg4[3];
+    reg4[0] = 0x04;
+    reg4[1] = 0b01010011;
+    reg4[2] = 0b00000100;
+    i2c_write_blocking(i2c1, ADDR, reg4, 3, false);
     
+    // Configure the PS Threshold
+    uint8_t reg7[3];
+    reg7[0] = 0x07;
+    reg7[1] = PS_HIGH_THRESH & 0xFF;
+    reg7[2] = (PS_HIGH_THRESH >> 8) & 0xFF; 
+    i2c_write_blocking(i2c1, ADDR, reg7, 3, false);
+
     //light_irq_init();
+    sensor_irq_init();
     return;
 }
 
@@ -142,7 +179,6 @@ void read_lux()
     uint target = timer_hw->timerawl + poll_rate_us;
     timer_hw->alarm[0] = target;
 
-    printf("YO\n");
 }
 
 void light_poll(){
@@ -153,14 +189,3 @@ void light_poll(){
     timer_hw->alarm[0] = target;
     printf("Light poll called\n"); 
 }
-// int main()
-// {
-//     stdio_init_all();
-//     light_init();
-
-//     for(;;) {
-//         tight_loop_contents();
-//     }
-
-//     return 0;
-// }
