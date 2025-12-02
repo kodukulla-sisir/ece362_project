@@ -273,11 +273,11 @@ void my_pwm_init(bool mtr,bool dir) {
 
 
 ///////////////////////////////////// 
-int main()
-{
-    my_gpio_init();
-    my_pwm_init(false,false);
-    //motor_two();
+// int main()
+// {
+//     my_gpio_init();
+//     my_pwm_init(false,false);
+//     //motor_two();
     //int state = 0;
 
 //     // uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);

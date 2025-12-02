@@ -34,7 +34,7 @@ const int MTR_IN4 = 26; // B-
 // PIO constants 
 const int A_PIN = 2;
 const int B_PIN = 3; 
-int position = 0;
+int32_t position = 0;
 static uint8_t last_state = 0xFF; 
 PIO pio = pio0;
 uint sm = 0;  
@@ -42,9 +42,9 @@ const int full_pos_threshold = 100; // Number of detents for full angle
 
 const int ALL_CTRL_PINS = (1u << MTR_IN1) | (1u << MTR_IN2) | (1u << MTR_IN3) | (1u << MTR_IN4);
 
-const int lux_threshold = 300; // temp lux val
-float curr_lux = 0.0f;
-const int spi_poll_time = 1000000; // 1 seconds 
+// const int lux_threshold = 300; // temp lux val
+//float curr_lux = 0.0f;
+const int spi_poll = 10000000; // 10 seconds 
 
 
 void pio_position(void){
@@ -67,45 +67,36 @@ void pio_position(void){
     // printf("B : %ld\n", B);
 } 
 
-
 // void display_lux(char* str, int temp){
 //     char temp_buffer[64]; 
 //     snprintf(temp_buffer, sizeof(temp_buffer), "%s: %d", str, temp);
 //     cd_display1(temp_buffer);
-// }
 
 void display_lux(){
-    printf("Display lux called"); 
     char temp_buffer[64]; 
-    //float lux = read_lux_spi(); 
-    snprintf(temp_buffer, sizeof(temp_buffer), "%s: %f", "Lux Level", curr_lux);
+    snprintf(temp_buffer, sizeof(temp_buffer), "%s: %d", "Lux Level", current_lux);
     cd_display1(temp_buffer);
 }
 
 
 void spi_poll(){
-    printf("Curreny lux : %f", current_lux); 
     hw_set_bits(&timer_hw->inte, 1u << 1);
     irq_set_exclusive_handler(TIMER0_IRQ_1, display_lux);
     irq_set_enabled(TIMER0_IRQ_1, true);
-    uint target = timer_hw->timerawl + spi_poll_time;
+    uint target = timer_hw->timerawl + spi_poll;
     timer_hw->alarm[1] = target;
 }
 
 int main()
 {   
+
     stdio_init_all();
-    printf("Before light_poll"); 
     light_init();
     light_poll();
-    printf("After light_poll"); 
+    spi_poll(); 
     init_chardisp_pins(); 
-    cd_init();
-    //spi_poll();  
-    //display_lux(); 
+    cd_init(); 
 
-     printf("Curreny lux : %f", curr_lux); 
-     printf("Curreny lux : %f", curr_lux); 
     //display_temp("The temp is ", 23); 
 
     // Setting irq handler for PIO 
@@ -115,28 +106,26 @@ int main()
     irq_set_enabled(PIO0_IRQ_0, true);
     pio_set_irq0_source_enabled(pio, pis_sm0_rx_fifo_not_empty, true);
 
-    // if(current_lux < lux_threshold){
-    //     my_pwm_init(true); //clockwise
-    // }
-    // else{
-    //     my_pwm_init(false); //counter clockwise
-    // }
+    if(current_lux < lux_threshold){
+        my_pwm_init(true); //clockwise
+    }
+    else{
+        my_pwm_init(false); //counter clockwise
+    }
 
-    // // Rotary encoder for shades angle 
-    // // Check if 
-    // if(position >= full_pos_threshold){
-    //     // Stop moving 
-    // } else {
-    //     // move
-    // }
+    // Rotary encoder for shades angle 
+    // Check if 
+    if(position >= full_pos_threshold){
+        // Stop moving 
+    } else {
+        // move
+    }
 
     for(;;)
     {
-        //tight_loop_contents();  
-        printf("Curreny lux : %f", current_lux); 
-    }
+        //tight_loop_contents();
 
-    return 0; 
+    }
 
 }
 

@@ -2,8 +2,7 @@
 #define LIGHTSENSOR_H
 
 extern float current_lux; 
-extern const int lux_threshold;
-extern int position;
+extern const int lux_threshold = 300;
 
 void light_irq_handler(); 
 void light_irq_init(); 
