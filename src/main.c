@@ -108,20 +108,20 @@ int main()
     irq_set_enabled(PIO0_IRQ_0, true);
     pio_set_irq0_source_enabled(pio, pis_sm0_rx_fifo_not_empty, true);
 
-    if(current_lux < lux_threshold){
-        my_pwm_init(false, true); //clockwise
-    }
-    else{
-        my_pwm_init(false, false); //counter clockwise
-    }
+    // if(current_lux < lux_threshold){
+    //     my_pwm_init(false, true); //clockwise
+    // }
+    // else{
+    //     my_pwm_init(false, false); //counter clockwise
+    // }
 
     // Rotary encoder for shades angle 
     // Check if 
-    if(position >= full_pos_threshold){
-        // Stop moving 
-    } else {
-        // move
-    }
+    // if(position >= full_pos_threshold){
+    //     // Stop moving 
+    // } else {
+    //     // move
+    // }
 
     for(;;)
     {

@@ -74,16 +74,16 @@ void sensor_irq_handler()
     
     int test = regD[1] & (1 << 1);
     printf("Val: %d\n", test);
-    if (regD[1] & (1 << 1))
-    {
-        //my_pwm_init(false, true);
-        PS_threshold = 1;
-        printf("PS_Threshold: %d\n",PS_threshold);
-    }
-    else
-    {
-        PS_threshold = 0;
-    }
+    // if (regD[1] & (1 << 1))
+    // {
+    //     //my_pwm_init(false, true);
+    //     PS_threshold = 1;
+    //     printf("PS_Threshold: %d\n",PS_threshold);
+    // }
+    // else
+    // {
+    //     PS_threshold = 0;
+    // }
 
     return;
 }
@@ -135,12 +135,12 @@ void light_init ()
     uint8_t reg4[3];
     reg4[0] = 0x04;
     reg4[1] = 0b01010011;
-    reg4[2] = 0b00000100;
+    reg4[2] = 0b00100100;
     i2c_write_blocking(i2c1, ADDR, reg4, 3, false);
     
     // Configure the PS Threshold
     uint8_t reg7[3];
-    reg7[0] = 0x06;
+    reg7[0] = 0x07;
     reg7[1] = PS_HIGH_THRESH & 0xFF;
     reg7[2] = (PS_HIGH_THRESH >> 8) & 0xFF; 
     i2c_write_blocking(i2c1, ADDR, reg7, 3, false);
