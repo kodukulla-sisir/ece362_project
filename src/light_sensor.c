@@ -24,13 +24,15 @@ extern const int HIGH_THRESH; // = HIGH_LUX / 0.012;
 extern const int INT_PIN; // = 16;
 extern const int PS_HIGH_THRESH;
 
-const int poll_rate_us = 1000000; // 1 second
+const int poll_rate_us = 1500000; // 1.5 second
 //float current_lux = 0.0f;
 float current_lux = 0.0f; 
 const int lux_threshold = 300; 
 int PS_threshold = 0;
 int odd_even_counter = 0; 
 int state = 0; // state = 1 is down and state = 0 is up
+const float lux_low_thresh = 10;
+int count = 0;
 
 // void light_irq_handler()
 // {
@@ -203,6 +205,31 @@ void read_lux()
     i2c_read_blocking(i2c1, ADDR, ps_data, 2, false);
     //uint16_t ps_raw = (uint16_t)ps_data[1] << 8 | ps_data[0];
     uint16_t thresh_int = ps_data[1] & 3;
+
+    if(current_lux < lux_low_thresh){
+        // Going down 
+        if(state == 0){
+            my_pwm_init(true, true); 
+            busy_wait_ms(1000);
+            pwm_hw->en = 0;
+            count++;
+            if (count >= 4)
+            {
+                state = 1;
+            }
+            printf("Going down\n");
+        } else {
+            my_pwm_init(true, false); 
+            busy_wait_ms(1000);
+            pwm_hw->en = 0;
+            count--;
+            if (count <= 0)
+            {
+                state = 0;
+            } 
+            printf("Going up\n"); 
+        }
+    }
 
     //printf("PS Value: %d\n", thresh_int);
 

@@ -22,7 +22,7 @@ const int SPI_7SEG_CSn = 13;
 const int SPI_7SEG_TX = 15;
 const int PS_HIGH_THRESH = 300;
 const int lux_high = 100;
-const int lux_low = 5;
+const int lux_low = 15;
 
 // NOT NEEDED since we are not using LCD/OLED in this practical.
 // But it needs to be defined to avoid compiler errors.
@@ -48,7 +48,7 @@ const int full_pos_threshold = 100; // Number of detents for full angle
 
 // const int lux_threshold = 300; // temp lux val
 //float curr_lux = 0.0f;
-const int spi_poll_timer = 1000000; // 10 seconds 
+const int spi_poll_timer = 500000; // 10 seconds 
 const int pos_mid = 5; 
 const int pos_high = 10; 
 
@@ -114,6 +114,7 @@ void pos_motor(){
         pwm_hw->en = 0;
     }
 }
+
 
 int main()
 {   
