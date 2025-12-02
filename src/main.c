@@ -100,8 +100,7 @@ int main()
     init_chardisp_pins(); 
     cd_init(); 
     spi_poll();
-    my_gpio_init();
-
+    
     //display_temp("The temp is ", 23); 
 
     // Setting irq handler for PIO 
