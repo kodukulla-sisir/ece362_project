@@ -22,7 +22,7 @@ extern const int HIGH_LUX; // = 400;
 extern const int LOW_THRESH; // = LOWER_LUX / 0.012;
 extern const int HIGH_THRESH; // = HIGH_LUX / 0.012;
 extern const int INT_PIN; // = 16;
-extern const int PS_LOW_THRESH;
+extern const int PS_HIGH_THRESH;
 
 const int poll_rate_us = 1000000; // 1 second
 //float current_lux = 0.0f;
@@ -71,8 +71,10 @@ void sensor_irq_handler()
 
     i2c_write_blocking(i2c1, ADDR, &rD, 1, true);
     i2c_read_blocking(i2c1, ADDR, regD, 2, false);
-    printf("IRQ\n");
-    if (regD[1] & (1 << 0))
+    
+    int test = regD[1] & (1 << 1);
+    printf("Val: %d\n", test);
+    if (regD[1] & (1 << 1))
     {
         //my_pwm_init(false, true);
         PS_threshold = 1;
@@ -137,11 +139,11 @@ void light_init ()
     i2c_write_blocking(i2c1, ADDR, reg4, 3, false);
     
     // Configure the PS Threshold
-    uint8_t reg6[3];
-    reg6[0] = 0x06;
-    reg6[1] = PS_LOW_THRESH & 0xFF;
-    reg6[2] = (PS_LOW_THRESH >> 8) & 0xFF; 
-    i2c_write_blocking(i2c1, ADDR, reg6, 3, false);
+    uint8_t reg7[3];
+    reg7[0] = 0x06;
+    reg7[1] = PS_HIGH_THRESH & 0xFF;
+    reg7[2] = (PS_HIGH_THRESH >> 8) & 0xFF; 
+    i2c_write_blocking(i2c1, ADDR, reg7, 3, false);
 
     //light_irq_init();
     return;
@@ -185,7 +187,7 @@ void read_lux()
 
     i2c_write_blocking(i2c1, ADDR, &ps_reg, 1, true);
     i2c_read_blocking(i2c1, ADDR, ps_data, 2, false);
-    uint16_t ps_raw = (uint16_t)data[1] << 8 | data[0];
+    uint16_t ps_raw = (uint16_t)ps_data[1] << 8 | ps_data[0];
 
     printf("PS Value: %d\n", ps_raw);
 
