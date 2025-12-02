@@ -63,19 +63,23 @@ int state = 0; // state = 1 is down and state = 0 is up
 //     gpio_set_irq_enabled_with_callback(INT_PIN, GPIO_IRQ_EDGE_FALL, true, light_irq_handler);
 
 //     return;
-// }
+// } 
 
 void sensor_irq_handler()
 {
-    gpio_acknowledge_irq(INT_PIN, GPIO_IRQ_EDGE_FALL);
+    int val = gpio_get(INT_PIN);
+    printf("INT PIN : %d\n", val); 
+    gpio_acknowledge_irq(INT_PIN, GPIO_IRQ_LEVEL_LOW);
     uint8_t rD = 0xD;
     uint8_t regD[2];
 
     i2c_write_blocking(i2c1, ADDR, &rD, 1, true);
     i2c_read_blocking(i2c1, ADDR, regD, 2, false);
     
-    int test = regD[1] & (1 << 1);
-    printf("Val: %d\n", test);
+    int test1 = regD[1];  //& (1 << 1);
+    int test0 = regD[0];
+    printf("Val1: %d\n", test1);
+    printf("Val0: %d\n", test0);
     // if (regD[1] & (1 << 1))
     // {
     //     //my_pwm_init(false, true);
@@ -106,7 +110,7 @@ void sensor_irq_init()
     gpio_init(INT_PIN);
     gpio_set_dir(INT_PIN, false);
     gpio_set_function(INT_PIN, GPIO_FUNC_SIO);
-    gpio_set_irq_enabled_with_callback(INT_PIN, GPIO_IRQ_EDGE_FALL, true, sensor_irq_handler);
+    gpio_set_irq_enabled_with_callback(INT_PIN, GPIO_IRQ_LEVEL_LOW, true, sensor_irq_handler);
 }
 
 void light_init ()
@@ -201,8 +205,6 @@ void read_lux()
     i2c_write_blocking(i2c1, ADDR, &ps_reg, 1, true);
     i2c_read_blocking(i2c1, ADDR, ps_data, 2, false);
     uint16_t ps_raw = (uint16_t)ps_data[1] << 8 | ps_data[0];
-
-    printf("PS Value: %d\n", ps_raw);
 
 }
 

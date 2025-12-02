@@ -4,6 +4,8 @@
         "dma.h": "c",
         "uart.h": "c",
         "pio.h": "c",
-        "lightsensor.h": "c"
+        "lightsensor.h": "c",
+        "adc.h": "c",
+        "stdio.h": "c"
     }
 }
