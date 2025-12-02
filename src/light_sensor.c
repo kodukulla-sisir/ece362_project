@@ -65,16 +65,18 @@ int PS_threshold = 0;
 
 void sensor_irq_handler()
 {
+    gpio_acknowledge_irq(INT_PIN, GPIO_IRQ_EDGE_FALL);
     uint8_t rD = 0xD;
     uint8_t regD[2];
 
     i2c_write_blocking(i2c1, ADDR, &rD, 1, true);
     i2c_read_blocking(i2c1, ADDR, regD, 2, false);
 
-    if (regD[1] & (1 << 1))
+    if (regD[1] & (1 << 0))
     {
         //my_pwm_init(false, true);
         PS_threshold = 1;
+        printf("Thresh\n");
     }
     else
     {
@@ -142,7 +144,6 @@ void light_init ()
     i2c_write_blocking(i2c1, ADDR, reg6, 3, false);
 
     //light_irq_init();
-    sensor_irq_init();
     return;
 }
 

@@ -19,7 +19,7 @@ const int INT_PIN = 16;
 const int SPI_7SEG_SCK = 14;
 const int SPI_7SEG_CSn = 13;
 const int SPI_7SEG_TX = 15;
-const int PS_LOW_THRESH = 1200;
+const int PS_LOW_THRESH = 1100;
 
 // NOT NEEDED since we are not using LCD/OLED in this practical.
 // But it needs to be defined to avoid compiler errors.
@@ -91,9 +91,9 @@ void spi_poll(){
 
 int main()
 {   
-
     stdio_init_all();
     light_init();
+    sensor_irq_init();
     light_poll(); 
     init_chardisp_pins(); 
     cd_init(); 
