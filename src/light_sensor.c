@@ -28,38 +28,47 @@ const int poll_rate_us = 1000000; // 1 second
 float current_lux = 0.0f; 
 const int lux_threshold = 300; 
 
-void light_irq_handler()
-{
-    gpio_acknowledge_irq(INT_PIN, GPIO_IRQ_EDGE_FALL);
-    uint8_t rD = 0xD;
-    uint8_t regD[2];
+// void light_irq_handler()
+// {
+//     gpio_acknowledge_irq(INT_PIN, GPIO_IRQ_EDGE_FALL);
+//     uint8_t rD = 0xD;
+//     uint8_t regD[2];
 
-    i2c_write_blocking(i2c1, ADDR, &rD, 1, true);
-    i2c_read_blocking(i2c1, ADDR, regD, 2, false);
+//     i2c_write_blocking(i2c1, ADDR, &rD, 1, true);
+//     i2c_read_blocking(i2c1, ADDR, regD, 2, false);
 
-    if (regD[1] & (1 << 5))
-    {
-        //my_pwm_init(false, true);
-        printf("ALS low threshold interrupt\n");
-    }
+//     if (regD[1] & (1 << 5))
+//     {
+//         //my_pwm_init(false, true);
+//         printf("ALS low threshold interrupt\n");
+//     }
 
-    if (regD[1] & (1 << 4))
-    {
-        printf("ALS high threshold interrupt\n");
-    }
+//     if (regD[1] & (1 << 4))
+//     {
+//         printf("ALS high threshold interrupt\n");
+//     }
 
-    return;
-}
+//     return;
+// }
 
-void light_irq_init()
+// void light_irq_init()
+// {
+//     gpio_init(INT_PIN);
+//     gpio_set_dir(INT_PIN, false);
+//     gpio_set_function(INT_PIN, GPIO_FUNC_SIO);
+//     gpio_set_irq_enabled_with_callback(INT_PIN, GPIO_IRQ_EDGE_FALL, true, light_irq_handler);
+
+//     return;
+// }
+
+void sensor_irq_init()
 {
     gpio_init(INT_PIN);
     gpio_set_dir(INT_PIN, false);
     gpio_set_function(INT_PIN, GPIO_FUNC_SIO);
-    gpio_set_irq_enabled_with_callback(INT_PIN, GPIO_IRQ_EDGE_FALL, true, light_irq_handler);
-
-    return;
+    gpio_set_irq_enabled_with_callback(INT_PIN, GPIO_IRQ_EDGE_FALL, true, sensor_irq_handler);
 }
+
 void light_init ()
 {
     // Init
@@ -88,7 +97,15 @@ void light_init ()
     reg2[2] = (HIGH_THRESH >> 8) & 0xFF; 
     i2c_write_blocking(i2c1, ADDR, reg2, 3, false);
 
-    light_irq_init();
+    // PS Config1 Register
+    uint8_t reg3[3];
+    reg3[0] = 0x03;
+    reg3[1] = 0b01010000;
+    reg3[2] = 0x00000011;
+    i2c_write_blocking(i2c1, ADDR, reg0, 3, false);
+
+    
+    //light_irq_init();
     return;
 }
 
@@ -124,7 +141,7 @@ void read_lux()
     // }
     uint target = timer_hw->timerawl + poll_rate_us;
     timer_hw->alarm[0] = target;
-    
+
     printf("YO\n");
 }
 

@@ -62,9 +62,6 @@ void pio_position(void){
         position--; // Counter
     }
     last_state = state; 
-    // printf("state : %u\n", state); 
-    // printf("position : %ld\n", position);
-    // printf("B : %ld\n", B);
 } 
 
 // void display_lux(char* str, int temp){
@@ -100,8 +97,7 @@ int main()
     init_chardisp_pins(); 
     cd_init(); 
     spi_poll();
-    //display_lux(); 
-
+    
     //display_temp("The temp is ", 23); 
 
     // Setting irq handler for PIO 
