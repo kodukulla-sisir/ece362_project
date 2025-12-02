@@ -29,6 +29,8 @@ const int poll_rate_us = 1000000; // 1 second
 float current_lux = 0.0f; 
 const int lux_threshold = 300; 
 int PS_threshold = 0;
+int odd_even_counter = 0; 
+int state = 0; // state = 1 is down and state = 0 is up
 
 // void light_irq_handler()
 // {
@@ -84,6 +86,17 @@ void sensor_irq_handler()
     // {
     //     PS_threshold = 0;
     // }
+    odd_even_counter++; 
+    odd_even_counter= odd_even_counter % 2;
+    if(odd_even_counter) {
+        my_pwm_init(true, true); 
+        busy_wait_ms(1000);
+        pwm_hw->en = 0;
+    } else {
+        my_pwm_init(true, false);
+        busy_wait_ms(1000);  
+        pwm_hw->en = 0;
+    }
 
     return;
 }
