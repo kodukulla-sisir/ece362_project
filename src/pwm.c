@@ -88,7 +88,8 @@ void my_pwm_init(bool mtr,bool dir) {
     // Top = 49,999
     // Clock Div = 20
     // Frequency out = 150 Hz
-    
+    //motor 1 = true
+    // motor 2 = false
     if(mtr) 
     {
     uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);

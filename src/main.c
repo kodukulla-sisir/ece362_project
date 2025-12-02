@@ -9,6 +9,7 @@
 #include "chardisp.h"
 #include "lightsensor.h"
 #include "pwm.h"
+#include "hardware/pwm.h"
 
 const int ADDR = 0x51;
 const int LOWER_LUX = 75;
@@ -20,6 +21,8 @@ const int SPI_7SEG_SCK = 14;
 const int SPI_7SEG_CSn = 13;
 const int SPI_7SEG_TX = 15;
 const int PS_HIGH_THRESH = 300;
+const int lux_high = 100;
+const int lux_low = 5;
 
 // NOT NEEDED since we are not using LCD/OLED in this practical.
 // But it needs to be defined to avoid compiler errors.
@@ -46,6 +49,8 @@ const int full_pos_threshold = 100; // Number of detents for full angle
 // const int lux_threshold = 300; // temp lux val
 //float curr_lux = 0.0f;
 const int spi_poll_timer = 1000000; // 10 seconds 
+const int pos_mid = 5; 
+const int pos_high = 10; 
 
 
 void pio_position(void){
@@ -88,17 +93,39 @@ void spi_poll(){
     timer1_hw->alarm[0] = target;
     printf("SPI POLL\n"); 
 }
+void pos_motor(){
+    printf("Position : %d\n", position);
+    sleep_ms(2);
+    int pos_check = (position > 0) && (position < pos_high);
+    if(current_lux < lux_low){
+        printf("LOWW"); 
+        my_pwm_init(1, 0);
+        while(current_lux < lux_low && ((position > 0) && (position < pos_high))){
+            // pass
+        }
+        pwm_hw->en = 0;
+    }
+    else if (current_lux > lux_high) {
+        printf("HIGH"); 
+        my_pwm_init(1, 1);
+        while(current_lux > lux_high && ((position > 0) && (position < pos_high))){
+            // pass
+        }
+        pwm_hw->en = 0;
+    }
+}
 
 int main()
 {   
     stdio_init_all();
+    fflush(stdout); 
     light_init();
-    sensor_irq_init();
     light_poll(); 
     init_chardisp_pins(); 
     cd_init(); 
     spi_poll();
     my_gpio_init(); 
+    my_pwm_init(1, false);
     
     //display_temp("The temp is ", 23); 
 
@@ -123,7 +150,7 @@ int main()
     // } else {
     //     // move
     // }
-
+    
     for(;;)
     {
         //tight_loop_contents();

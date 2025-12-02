@@ -73,9 +73,6 @@ void sensor_irq_handler()
 
     i2c_write_blocking(i2c1, ADDR, &rD, 1, true);
     i2c_read_blocking(i2c1, ADDR, regD, 2, false);
-    
-    int test = regD[1] & (1 << 1);
-    printf("Val: %d\n", test);
     // if (regD[1] & (1 << 1))
     // {
     //     //my_pwm_init(false, true);
@@ -86,18 +83,21 @@ void sensor_irq_handler()
     // {
     //     PS_threshold = 0;
     // }
-    odd_even_counter++; 
-    odd_even_counter= odd_even_counter % 2;
-    if(odd_even_counter) {
-        my_pwm_init(true, true); 
-        busy_wait_ms(1000);
-        pwm_hw->en = 0;
-    } else {
-        my_pwm_init(true, false);
-        busy_wait_ms(1000);  
-        pwm_hw->en = 0;
+    if (regD[1] & (1 << 5))
+    {
+        printf("counter: %d\n", odd_even_counter);
+        odd_even_counter++; 
+        odd_even_counter= odd_even_counter % 2;
+        if(odd_even_counter) {
+            my_pwm_init(true, true); 
+            busy_wait_ms(1000);
+            pwm_hw->en = 0;
+        } else {
+            my_pwm_init(true, false);
+            busy_wait_ms(1000);  
+            pwm_hw->en = 0;
+        }
     }
-
     return;
 }
 
@@ -130,35 +130,36 @@ void light_init ()
     reg1[2] = (LOW_THRESH >> 8) & 0xFF; 
     i2c_write_blocking(i2c1, ADDR, reg1, 3, false);
 
-    // Higher Threshold Register
-    uint8_t reg2[3];
-    reg2[0] = 0x01;
-    reg2[1] = HIGH_THRESH & 0xFF;
-    reg2[2] = (HIGH_THRESH >> 8) & 0xFF; 
-    i2c_write_blocking(i2c1, ADDR, reg2, 3, false);
+    // // Higher Threshold Register
+    // uint8_t reg2[3];
+    // reg2[0] = 0x01;
+    // reg2[1] = HIGH_THRESH & 0xFF;
+    // reg2[2] = (HIGH_THRESH >> 8) & 0xFF; 
+    // i2c_write_blocking(i2c1, ADDR, reg2, 3, false);
 
-    // PS Config1 and Config2 Register
-    uint8_t reg3[3];
-    reg3[0] = 0x03;
-    reg3[1] = 0b00010110;
-    reg3[2] = 0b00001001;
-    i2c_write_blocking(i2c1, ADDR, reg3, 3, false);
+    // // PS Config1 and Config2 Register
+    // uint8_t reg3[3];
+    // reg3[0] = 0x03;
+    // reg3[1] = 0b00010110;
+    // reg3[2] = 0b00001011;
+    // i2c_write_blocking(i2c1, ADDR, reg3, 3, false);
 
-    // PS Config3 and MS Register
-    uint8_t reg4[3];
-    reg4[0] = 0x04;
-    reg4[1] = 0b01010011;
-    reg4[2] = 0b00100100;
-    i2c_write_blocking(i2c1, ADDR, reg4, 3, false);
+    // // PS Config3 and MS Register
+    // uint8_t reg4[3];
+    // reg4[0] = 0x04;
+    // reg4[1] = 0b01010011;
+    // reg4[2] = 0b00100100;
+    // i2c_write_blocking(i2c1, ADDR, reg4, 3, false);
     
-    // Configure the PS Threshold
-    uint8_t reg7[3];
-    reg7[0] = 0x07;
-    reg7[1] = PS_HIGH_THRESH & 0xFF;
-    reg7[2] = (PS_HIGH_THRESH >> 8) & 0xFF; 
-    i2c_write_blocking(i2c1, ADDR, reg7, 3, false);
+    // // Configure the PS Threshold
+    // uint8_t reg7[3];
+    // reg7[0] = 0x07;
+    // reg7[1] = PS_HIGH_THRESH & 0xFF;
+    // reg7[2] = (PS_HIGH_THRESH >> 8) & 0xFF; 
+    // i2c_write_blocking(i2c1, ADDR, reg7, 3, false);
 
     //light_irq_init();
+    sensor_irq_init();
     return;
 }
 
@@ -195,14 +196,15 @@ void read_lux()
     uint target = timer_hw->timerawl + poll_rate_us;
     timer_hw->alarm[0] = target;
 
-    uint8_t ps_reg = 0x08; // ALS_DATA register
+    uint8_t ps_reg = 0x0D; // ALS_DATA register
     uint8_t ps_data[2];
 
     i2c_write_blocking(i2c1, ADDR, &ps_reg, 1, true);
     i2c_read_blocking(i2c1, ADDR, ps_data, 2, false);
-    uint16_t ps_raw = (uint16_t)ps_data[1] << 8 | ps_data[0];
+    //uint16_t ps_raw = (uint16_t)ps_data[1] << 8 | ps_data[0];
+    uint16_t thresh_int = ps_data[1] & 3;
 
-    printf("PS Value: %d\n", ps_raw);
+    //printf("PS Value: %d\n", thresh_int);
 
 }
 

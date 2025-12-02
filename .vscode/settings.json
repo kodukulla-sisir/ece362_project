@@ -6,6 +6,7 @@
         "pio.h": "c",
         "lightsensor.h": "c",
         "adc.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "spi.h": "c"
     }
 }
