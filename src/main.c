@@ -9,7 +9,6 @@
 #include "chardisp.h"
 #include "lightsensor.h"
 #include "pwm.h"
-#include "hardware/i2c.h"
 
 const int ADDR = 0x51;
 const int LOWER_LUX = 75;
@@ -92,7 +91,6 @@ void spi_poll(){
 
 int main()
 {   
-
     stdio_init_all();
     light_init();
     sensor_irq_init();
@@ -100,6 +98,7 @@ int main()
     init_chardisp_pins(); 
     cd_init(); 
     spi_poll();
+    my_gpio_init(); 
     
     //display_temp("The temp is ", 23); 
 
