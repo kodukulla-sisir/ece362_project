@@ -25,10 +25,12 @@ extern const int INT_PIN; // = 16;
 
 const int poll_rate_us = 1000000; // 1 second
 //float current_lux = 0.0f;
-current_lux = 0.0f; 
+float current_lux = 0.0f; 
+const int lux_threshold = 300; 
 
 void light_irq_handler()
 {
+    gpio_acknowledge_irq(INT_PIN, GPIO_IRQ_EDGE_FALL);
     uint8_t rD = 0xD;
     uint8_t regD[2];
 
@@ -37,7 +39,7 @@ void light_irq_handler()
 
     if (regD[1] & (1 << 5))
     {
-        my_pwm_init(true);
+        //my_pwm_init(false, true);
         printf("ALS low threshold interrupt\n");
     }
 
@@ -93,6 +95,7 @@ void light_init ()
 
 void read_lux()
 {
+    hw_clear_bits(&timer_hw->intr, 1u << 0); 
     uint8_t reg = 0x09; // ALS_DATA register
     uint8_t data[2] = {0, 0};
 
@@ -113,12 +116,16 @@ void read_lux()
     float lux = raw * 0.012f;
     current_lux = lux;
 
-    if(current_lux < lux_threshold){
-        my_pwm_init(true); //clockwise
-    }
-    else{
-        my_pwm_init(false); //counter clockwise
-    }
+    // if(current_lux < lux_threshold){
+    //     my_pwm_init(false, true); //clockwise
+    // }
+    // else{
+    //     my_pwm_init(false, false); //counter clockwise
+    // }
+    uint target = timer_hw->timerawl + poll_rate_us;
+    timer_hw->alarm[0] = target;
+    
+    printf("YO\n");
 }
 
 void light_poll(){
@@ -127,6 +134,7 @@ void light_poll(){
     irq_set_enabled(TIMER0_IRQ_0, true);
     uint target = timer_hw->timerawl + poll_rate_us;
     timer_hw->alarm[0] = target;
+    printf("Light poll called\n"); 
 }
 // int main()
 // {

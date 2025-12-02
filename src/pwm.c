@@ -22,15 +22,15 @@
 
 // Make sure to set your pins if you are using this on your own breadboard.
 // For the Platform Test Board, these are the correct pin numbers.
-extern const int SPI_7SEG_SCK; // = 14;
-extern const int SPI_7SEG_CSn; // = 13;
-extern const int SPI_7SEG_TX;//  = 15;
+// extern const int SPI_7SEG_SCK; // = 14;
+// extern const int SPI_7SEG_CSn; // = 13;
+// extern const int SPI_7SEG_TX;//  = 15;
 
-// NOT NEEDED since we are not using LCD/OLED in this practical.
-// But it needs to be defined to avoid compiler errors.
-const int SPI_DISP_SCK = -1;
-const int SPI_DISP_CSn = -1;
-const int SPI_DISP_TX = -1;
+// // NOT NEEDED since we are not using LCD/OLED in this practical.
+// // But it needs to be defined to avoid compiler errors.
+// const int SPI_DISP_SCK = -1;
+// const int SPI_DISP_CSn = -1;
+// const int SPI_DISP_TX = -1;
 
 //MTR 1
 const int MTR_IN1 = 30; // A+

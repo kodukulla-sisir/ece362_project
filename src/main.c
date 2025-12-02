@@ -11,8 +11,8 @@
 #include "pwm.h"
 
 const int ADDR = 0x51;
-const int LOWER_LUX = 50;
-const int HIGH_LUX = 400;
+const int LOWER_LUX = 75;
+const int HIGH_LUX = 150;
 const int LOW_THRESH = LOWER_LUX / 0.012;
 const int HIGH_THRESH = HIGH_LUX / 0.012;
 const int INT_PIN = 16;
@@ -26,10 +26,10 @@ const int SPI_DISP_SCK = 34;
 const int SPI_DISP_CSn = 33;
 const int SPI_DISP_TX = 35;
 
-const int MTR_IN1 = 30; // A+
-const int MTR_IN2 = 29; // A-
-const int MTR_IN3 = 25; // B+
-const int MTR_IN4 = 26; // B-
+// const int MTR_IN1 = 30; // A+
+// const int MTR_IN2 = 29; // A-
+// const int MTR_IN3 = 25; // B+
+// const int MTR_IN4 = 26; // B-
 
 // PIO constants 
 const int A_PIN = 2;
@@ -40,11 +40,11 @@ PIO pio = pio0;
 uint sm = 0;  
 const int full_pos_threshold = 100; // Number of detents for full angle 
 
-const int ALL_CTRL_PINS = (1u << MTR_IN1) | (1u << MTR_IN2) | (1u << MTR_IN3) | (1u << MTR_IN4);
+//const int ALL_CTRL_PINS = (1u << MTR_IN1) | (1u << MTR_IN2) | (1u << MTR_IN3) | (1u << MTR_IN4);
 
 // const int lux_threshold = 300; // temp lux val
 //float curr_lux = 0.0f;
-const int spi_poll = 10000000; // 10 seconds 
+const int spi_poll_timer = 1000000; // 10 seconds 
 
 
 void pio_position(void){
@@ -73,18 +73,22 @@ void pio_position(void){
 //     cd_display1(temp_buffer);
 
 void display_lux(){
+    hw_clear_bits(&timer1_hw->intr, 1u << 0);
     char temp_buffer[64]; 
-    snprintf(temp_buffer, sizeof(temp_buffer), "%s: %d", "Lux Level", current_lux);
+    snprintf(temp_buffer, sizeof(temp_buffer), "%s: %f", "Lux Level", current_lux);
     cd_display1(temp_buffer);
+    uint target = timer1_hw->timerawl + spi_poll_timer;
+    timer1_hw->alarm[0] = target;
 }
 
 
 void spi_poll(){
-    hw_set_bits(&timer_hw->inte, 1u << 1);
-    irq_set_exclusive_handler(TIMER0_IRQ_1, display_lux);
-    irq_set_enabled(TIMER0_IRQ_1, true);
-    uint target = timer_hw->timerawl + spi_poll;
-    timer_hw->alarm[1] = target;
+    hw_set_bits(&timer1_hw->inte, 1u << 0);
+    irq_set_exclusive_handler(TIMER1_IRQ_0, display_lux);
+    irq_set_enabled(TIMER1_IRQ_0, true);
+    uint target = timer1_hw->timerawl + spi_poll_timer;
+    timer1_hw->alarm[0] = target;
+    printf("SPI POLL\n"); 
 }
 
 int main()
@@ -92,10 +96,11 @@ int main()
 
     stdio_init_all();
     light_init();
-    light_poll();
-    spi_poll(); 
+    light_poll(); 
     init_chardisp_pins(); 
     cd_init(); 
+    spi_poll();
+    //display_lux(); 
 
     //display_temp("The temp is ", 23); 
 
@@ -107,10 +112,10 @@ int main()
     pio_set_irq0_source_enabled(pio, pis_sm0_rx_fifo_not_empty, true);
 
     if(current_lux < lux_threshold){
-        my_pwm_init(true); //clockwise
+        my_pwm_init(false, true); //clockwise
     }
     else{
-        my_pwm_init(false); //counter clockwise
+        my_pwm_init(false, false); //counter clockwise
     }
 
     // Rotary encoder for shades angle 

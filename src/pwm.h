@@ -4,8 +4,8 @@
 #include <stdbool.h>
 
 void my_gpio_init(); 
-void my_pwm_init(bool dir); 
-void motor_two();
+void my_pwm_init(bool mtr, bool dir); 
+
 
 
 #endif
