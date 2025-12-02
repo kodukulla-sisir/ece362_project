@@ -71,12 +71,12 @@ void sensor_irq_handler()
 
     i2c_write_blocking(i2c1, ADDR, &rD, 1, true);
     i2c_read_blocking(i2c1, ADDR, regD, 2, false);
-
+    printf("IRQ\n");
     if (regD[1] & (1 << 0))
     {
         //my_pwm_init(false, true);
         PS_threshold = 1;
-        printf("Thresh\n");
+        printf("PS_Threshold: %d\n",PS_threshold);
     }
     else
     {

@@ -39,10 +39,10 @@ const int MTR_IN3 = 25; // B+
 const int MTR_IN4 = 26; // B-
 
 // MTR 2
-const int MTR2_IN1 = 30; // A+
-const int MTR2_IN2 = 29; // A-
-const int MTR2_IN3 = 25; // B+
-const int MTR2_IN4 = 26; // B-
+const int MTR2_IN1 = 18; // A+
+const int MTR2_IN2 = 17; // A-
+const int MTR2_IN3 = 22; // B+
+const int MTR2_IN4 = 21; // B-
 
 const int ALL_CTRL_PINS = (1u << MTR_IN1) | (1u << MTR_IN2) | (1u << MTR_IN3) | (1u << MTR_IN4) | (1u << MTR2_IN1) | (1u << MTR2_IN2) | (1u << MTR2_IN3) | (1u << MTR2_IN4);
 
