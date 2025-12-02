@@ -179,6 +179,15 @@ void read_lux()
     uint target = timer_hw->timerawl + poll_rate_us;
     timer_hw->alarm[0] = target;
 
+    uint8_t ps_reg = 0x08; // ALS_DATA register
+    uint8_t ps_data[2];
+
+    i2c_write_blocking(i2c1, ADDR, &ps_reg, 1, true);
+    i2c_read_blocking(i2c1, ADDR, ps_data, 2, false);
+    uint16_t ps_raw = (uint16_t)data[1] << 8 | data[0];
+
+    printf("PS Value: %d\n");
+
 }
 
 void light_poll(){
