@@ -46,10 +46,7 @@ const int MTR2_IN4 = 21; // B-
 
 const int ALL_CTRL_PINS = (1u << MTR_IN1) | (1u << MTR_IN2) | (1u << MTR_IN3) | (1u << MTR_IN4) | (1u << MTR2_IN1) | (1u << MTR2_IN2) | (1u << MTR2_IN3) | (1u << MTR2_IN4);
 
-uint16_t APS = 0;
-uint16_t AMS = 0;
-uint16_t BPS = 0;
-uint16_t BMS = 0;
+
 // const int S0 = (1u << MTR_IN1) | (1u << MTR_IN3);
 // const int S1 = (1u << MTR_IN2) | (1u << MTR_IN3);
 // const int S2 = (1u << MTR_IN2) | (1u << MTR_IN4);
@@ -90,19 +87,23 @@ void my_pwm_init(bool mtr,bool dir) {
     // Frequency out = 150 Hz
     //motor 1 = true
     // motor 2 = false
+    uint16_t APS = 0;
+    uint16_t AMS = 0;
+    uint16_t BPS = 0;
+    uint16_t BMS = 0;
     if(mtr) 
     {
-    uint16_t APS = pwm_gpio_to_slice_num(MTR_IN1);
-    uint16_t AMS = pwm_gpio_to_slice_num(MTR_IN2);
-    uint16_t BPS = pwm_gpio_to_slice_num(MTR_IN3);
-    uint16_t BMS = pwm_gpio_to_slice_num(MTR_IN4);
+     APS = pwm_gpio_to_slice_num(MTR_IN1);
+     AMS = pwm_gpio_to_slice_num(MTR_IN2);
+     BPS = pwm_gpio_to_slice_num(MTR_IN3);
+     BMS = pwm_gpio_to_slice_num(MTR_IN4);
     }
     else
     {
-    uint16_t APS = pwm_gpio_to_slice_num(MTR2_IN1);
-    uint16_t AMS = pwm_gpio_to_slice_num(MTR2_IN2);
-    uint16_t BPS = pwm_gpio_to_slice_num(MTR2_IN3);
-    uint16_t BMS = pwm_gpio_to_slice_num(MTR2_IN4);
+     APS = pwm_gpio_to_slice_num(MTR2_IN1);
+     AMS = pwm_gpio_to_slice_num(MTR2_IN2);
+     BPS = pwm_gpio_to_slice_num(MTR2_IN3);
+     BMS = pwm_gpio_to_slice_num(MTR2_IN4);
     }
     gpio_set_function_masked(ALL_CTRL_PINS,GPIO_FUNC_PWM);
 

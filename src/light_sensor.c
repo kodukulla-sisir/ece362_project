@@ -31,8 +31,9 @@ const int lux_threshold = 300;
 int PS_threshold = 0;
 int odd_even_counter = 0; 
 int state = 0; // state = 1 is down and state = 0 is up
-const float lux_low_thresh = 10;
+const float lux_low_thresh = 100;
 int count = 0;
+int motion_poll = 100;
 
 // void light_irq_handler()
 // {
@@ -69,46 +70,45 @@ int count = 0;
 
 void sensor_irq_handler()
 {
-    gpio_acknowledge_irq(INT_PIN, GPIO_IRQ_EDGE_FALL);
-    uint8_t rD = 0xD;
+    // gpio_acknowledge_irq(INT_PIN, GPIO_IRQ_EDGE_FALL);
+    hw_clear_bits(&timer1_hw->intr, 1u << 1);
+    uint8_t rD = 0x8;//PS_data addr
     uint8_t regD[2];
 
     i2c_write_blocking(i2c1, ADDR, &rD, 1, true);
     i2c_read_blocking(i2c1, ADDR, regD, 2, false);
-    // if (regD[1] & (1 << 1))
-    // {
-    //     //my_pwm_init(false, true);
-    //     PS_threshold = 1;
-    //     printf("PS_Threshold: %d\n",PS_threshold);
-    // }
-    // else
-    // {
-    //     PS_threshold = 0;
-    // }
-    if (regD[1] & (1 << 5))
+    printf("called: %d\n", regD[0]);
+    
+    if (regD[0] > 75)
     {
-        printf("counter: %d\n", odd_even_counter);
         odd_even_counter++; 
         odd_even_counter= odd_even_counter % 2;
         if(odd_even_counter) {
-            my_pwm_init(true, true); 
+            my_pwm_init(0, true); 
             busy_wait_ms(1000);
             pwm_hw->en = 0;
         } else {
-            my_pwm_init(true, false);
+            my_pwm_init(0, false);
             busy_wait_ms(1000);  
             pwm_hw->en = 0;
         }
     }
+    uint target = timer1_hw->timerawl + motion_poll;
+    timer1_hw->alarm[1] = target;
     return;
 }
 
 void sensor_irq_init()
 {
-    gpio_init(INT_PIN);
-    gpio_set_dir(INT_PIN, false);
-    gpio_set_function(INT_PIN, GPIO_FUNC_SIO);
-    gpio_set_irq_enabled_with_callback(INT_PIN, GPIO_IRQ_EDGE_FALL, true, sensor_irq_handler);
+    // gpio_init(INT_PIN);
+    // gpio_set_dir(INT_PIN, false);
+    // gpio_set_function(INT_PIN, GPIO_FUNC_SIO);
+    // gpio_set_irq_enabled_with_callback(INT_PIN, GPIO_IRQ_EDGE_FALL, true, sensor_irq_handler);
+    hw_set_bits(&timer1_hw->inte, 1u << 1);
+    irq_set_exclusive_handler(TIMER1_IRQ_1, sensor_irq_handler);
+    irq_set_enabled(TIMER1_IRQ_1, true);
+    uint target = timer1_hw->timerawl + motion_poll;
+    timer1_hw->alarm[1] = target;
 }
 
 void light_init ()
@@ -133,32 +133,32 @@ void light_init ()
     i2c_write_blocking(i2c1, ADDR, reg1, 3, false);
 
     // // Higher Threshold Register
-    // uint8_t reg2[3];
-    // reg2[0] = 0x01;
-    // reg2[1] = HIGH_THRESH & 0xFF;
-    // reg2[2] = (HIGH_THRESH >> 8) & 0xFF; 
-    // i2c_write_blocking(i2c1, ADDR, reg2, 3, false);
+    uint8_t reg2[3];
+    reg2[0] = 0x01;
+    reg2[1] = HIGH_THRESH & 0xFF;
+    reg2[2] = (HIGH_THRESH >> 8) & 0xFF; 
+    i2c_write_blocking(i2c1, ADDR, reg2, 3, false);
 
-    // // PS Config1 and Config2 Register
-    // uint8_t reg3[3];
-    // reg3[0] = 0x03;
-    // reg3[1] = 0b00010110;
-    // reg3[2] = 0b00001011;
-    // i2c_write_blocking(i2c1, ADDR, reg3, 3, false);
+    // PS Config1 and Config2 Register
+    uint8_t reg3[3];
+    reg3[0] = 0x03;
+    reg3[1] = 0b00010110;
+    reg3[2] = 0b00001011;
+    i2c_write_blocking(i2c1, ADDR, reg3, 3, false);
 
-    // // PS Config3 and MS Register
-    // uint8_t reg4[3];
-    // reg4[0] = 0x04;
-    // reg4[1] = 0b01010011;
-    // reg4[2] = 0b00100100;
-    // i2c_write_blocking(i2c1, ADDR, reg4, 3, false);
+    // PS Config3 and MS Register
+    uint8_t reg4[3];
+    reg4[0] = 0x04;
+    reg4[1] = 0b01010011;
+    reg4[2] = 0b00100100;
+    i2c_write_blocking(i2c1, ADDR, reg4, 3, false);
     
-    // // Configure the PS Threshold
-    // uint8_t reg7[3];
-    // reg7[0] = 0x07;
-    // reg7[1] = PS_HIGH_THRESH & 0xFF;
-    // reg7[2] = (PS_HIGH_THRESH >> 8) & 0xFF; 
-    // i2c_write_blocking(i2c1, ADDR, reg7, 3, false);
+    // Configure the PS Threshold
+    uint8_t reg7[3];
+    reg7[0] = 0x07;
+    reg7[1] = PS_HIGH_THRESH & 0xFF;
+    reg7[2] = (PS_HIGH_THRESH >> 8) & 0xFF; 
+    i2c_write_blocking(i2c1, ADDR, reg7, 3, false);
 
     //light_irq_init();
     sensor_irq_init();
@@ -210,17 +210,20 @@ void read_lux()
         // Going down 
         if(state == 0){
             my_pwm_init(true, true); 
-            busy_wait_ms(1000);
+            busy_wait_ms(500);
+            // for(int i=0; i<500000000000000000000; i++){
+            //     // pass
+            // }
             pwm_hw->en = 0;
             count++;
-            if (count >= 4)
+            if (count >= 2)
             {
                 state = 1;
             }
             printf("Going down\n");
         } else {
             my_pwm_init(true, false); 
-            busy_wait_ms(1000);
+            busy_wait_ms(500);
             pwm_hw->en = 0;
             count--;
             if (count <= 0)
@@ -232,7 +235,12 @@ void read_lux()
     }
 
     //printf("PS Value: %d\n", thresh_int);
+    uint8_t rD = 0x8;
+    uint8_t regD[2];
 
+    i2c_write_blocking(i2c1, ADDR, &rD, 1, true);
+    i2c_read_blocking(i2c1, ADDR, regD, 2, false);
+    printf("called: %d\n", regD[0]);
 }
 
 void light_poll(){

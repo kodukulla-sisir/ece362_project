@@ -38,7 +38,7 @@ const int SPI_DISP_TX = 35;
 // PIO constants 
 const int A_PIN = 2;
 const int B_PIN = 3; 
-int32_t position = 0;
+int position = 0;
 static uint8_t last_state = 0xFF; 
 PIO pio = pio0;
 uint sm = 0;  
@@ -48,7 +48,7 @@ const int full_pos_threshold = 100; // Number of detents for full angle
 
 // const int lux_threshold = 300; // temp lux val
 //float curr_lux = 0.0f;
-const int spi_poll_timer = 500000; // 10 seconds 
+const int spi_poll_timer = 100000; // 10 seconds 
 const int pos_mid = 5; 
 const int pos_high = 10; 
 
@@ -78,8 +78,12 @@ void pio_position(void){
 void display_lux(){
     hw_clear_bits(&timer1_hw->intr, 1u << 0);
     char temp_buffer[64]; 
+    char pos_buffer[64]; 
     snprintf(temp_buffer, sizeof(temp_buffer), "%s: %f", "Lux Level", current_lux);
+    snprintf(pos_buffer, sizeof(temp_buffer), "%s: %d", "Position:", position);
     cd_display1(temp_buffer);
+    //cd_display2(pos_buffer);
+    // printf("Pos : %d\n", position); 
     uint target = timer1_hw->timerawl + spi_poll_timer;
     timer1_hw->alarm[0] = target;
 }
@@ -126,7 +130,7 @@ int main()
     cd_init(); 
     spi_poll();
     my_gpio_init(); 
-    my_pwm_init(1, false);
+    //my_pwm_init(1, false);
     
     //display_temp("The temp is ", 23); 
 
