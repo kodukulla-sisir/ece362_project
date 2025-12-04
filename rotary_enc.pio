@@ -1,0 +1,35 @@
+
+.program rotary_enc
+
+loop:
+    wait 0 pin 0
+    wait 1 pin 0     
+    in pins, 2          
+    push                
+    jmp loop
+.wrap
+
+
+
+% c-sdk {
+static inline void rotary_enc_program_init(PIO pio, uint sm, uint offset, uint pin_a, uint pin_b) {
+    pio_sm_set_enabled(pio, sm, false);
+
+    pio_gpio_init(pio, pin_a);
+    pio_gpio_init(pio, pin_b);
+    gpio_pull_up(pin_a);
+    gpio_pull_up(pin_b);
+
+    pio_sm_set_consecutive_pindirs(pio, sm, pin_a, 2, false);
+
+    pio_sm_config c = rotary_enc_program_get_default_config(offset);
+    sm_config_set_in_pins(&c, pin_a);   
+    sm_config_set_jmp_pin(&c, pin_a);
+
+    sm_config_set_in_shift(&c, false, false, 0);
+    sm_config_set_clkdiv(&c, 150.0f);  // Honestly idk what the clock is but im assuming its 150MHz, which is I divide by 150. 
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}
